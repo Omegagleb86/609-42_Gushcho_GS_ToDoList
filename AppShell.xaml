@@ -8,7 +8,7 @@
 
     <ShellContent
         Title="Мои задачи"
-        ContentTemplate="{DataTemplate local:MainPage}"
+        x:Name="MainContent"
         Route="MainPage" />
 
 </Shell>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+ xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+ xmlns:vm="clr-namespace:ToDoList.ViewModels" xmlns:models="clr-namespace:ToDoList.Models"
+ xmlns:views="clr-namespace:ToDoList.Views"
+ x:Class="ToDoList.Views.TaskItemView" x:DataType="vm:TaskViewModel">
+ <ContentView.Resources><ResourceDictionary Source="../Resources/Styles/TodoStyles.xaml" /></ContentView.Resources>
+ <Border Padding="6">
+  <VerticalStackLayout Spacing="10">
+   <Grid ColumnDefinitions="48,*,48,48" ColumnSpacing="6">
+    <ImageButton Source="{Binding StatusIcon}" Command="{Binding ToggleCommand}" SemanticProperties.Description="Изменить статус задачи" />
+    <Entry Grid.Column="1" Text="{Binding Title}" ReturnCommand="{Binding RenameCommand}" Unfocused="OnTitleUnfocused" MinimumWidthRequest="0" SemanticProperties.Description="Название задачи" />
+    <ImageButton Grid.Column="2" Source="add.png" Command="{Binding ShowChildCommand}" SemanticProperties.Description="Открыть или скрыть создание подзадачи" ToolTipProperties.Text="Добавить подзадачу" />
+    <ImageButton Grid.Column="3" Source="delete.png" Style="{StaticResource DeleteButton}" Command="{Binding DeleteCommand}" SemanticProperties.Description="Удалить задачу вместе с подзадачами" />
+   </Grid>
+   <Label Text="{Binding StatusText}" FontSize="12" />
+   <Picker Title="Без категории" ItemsSource="{Binding Categories}" ItemDisplayBinding="{Binding Name, x:DataType=models:Category}" SelectedItem="{Binding SelectedCategory}" />
+   <VerticalStackLayout Spacing="6" IsVisible="{Binding IsAddingChild}">
+    <Label Text="Новая подзадача" FontAttributes="Bold" />
+    <Grid ColumnDefinitions="*,48" ColumnSpacing="6">
+     <Entry Text="{Binding NewChildTitle}" Placeholder="Название подзадачи" MinimumWidthRequest="0" ReturnCommand="{Binding AddChildCommand}" />
+     <ImageButton Grid.Column="1" Source="add.png" Command="{Binding AddChildCommand}" SemanticProperties.Description="Добавить подзадачу" />
+    </Grid>
+    <Picker Title="Без категории" ItemsSource="{Binding Categories}" ItemDisplayBinding="{Binding Name, x:DataType=models:Category}" SelectedItem="{Binding NewChildCategory}" />
+   </VerticalStackLayout>
+   <VerticalStackLayout Margin="8,0,0,0" Spacing="8" BindableLayout.ItemsSource="{Binding Children}">
+    <BindableLayout.ItemTemplate>
+     <DataTemplate x:DataType="vm:TaskViewModel"><views:TaskItemView /></DataTemplate>
+    </BindableLayout.ItemTemplate>
+   </VerticalStackLayout>
+  </VerticalStackLayout>
+ </Border>
+</ContentView>

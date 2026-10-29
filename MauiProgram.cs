@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
+using ToDoList.Data;
+using ToDoList.ViewModels;
 
 namespace ToDoList;
 
@@ -18,6 +20,11 @@ public static class MauiProgram
 #if DEBUG
 		builder.Logging.AddDebug();
 #endif
+
+        builder.Services.AddSingleton<ITodoRepository, InMemoryTodoRepository>();
+        builder.Services.AddSingleton<MainViewModel>();
+        builder.Services.AddTransient<MainPage>();
+        builder.Services.AddSingleton<AppShell>();
 
 		return builder.Build();
 	}

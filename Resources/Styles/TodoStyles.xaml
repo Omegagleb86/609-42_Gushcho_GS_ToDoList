@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <Style TargetType="Label">
+      <Setter Property="TextColor" Value="{AppThemeBinding Light=#202238, Dark=#F2F2FA}" />
+    </Style>
+    <Style x:Key="SectionTitle" TargetType="Label">
+      <Setter Property="FontSize" Value="20" />
+      <Setter Property="FontAttributes" Value="Bold" />
+      <Setter Property="SemanticProperties.HeadingLevel" Value="Level2" />
+    </Style>
+    <Style TargetType="Border">
+      <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark=#20202C}" />
+      <Setter Property="Stroke" Value="{AppThemeBinding Light=#E1E3EE, Dark=#3A3A4C}" />
+      <Setter Property="StrokeShape" Value="RoundRectangle 16" />
+      <Setter Property="Padding" Value="18" />
+    </Style>
+    <Style TargetType="Entry">
+      <Setter Property="TextColor" Value="{AppThemeBinding Light=#202238, Dark=#F2F2FA}" />
+      <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light=#72758A, Dark=#A5A5BA}" />
+      <Setter Property="MinimumHeightRequest" Value="48" />
+    </Style>
+    <Style TargetType="Picker">
+      <Setter Property="TextColor" Value="{AppThemeBinding Light=#202238, Dark=#F2F2FA}" />
+      <Setter Property="TitleColor" Value="{AppThemeBinding Light=#72758A, Dark=#A5A5BA}" />
+      <Setter Property="MinimumHeightRequest" Value="48" />
+    </Style>
+    <Style x:Key="IconButton" TargetType="ImageButton">
+      <Setter Property="BackgroundColor" Value="#6554D9" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="WidthRequest" Value="48" />
+      <Setter Property="HeightRequest" Value="48" />
+      <Setter Property="MinimumWidthRequest" Value="48" />
+      <Setter Property="MinimumHeightRequest" Value="48" />
+      <Setter Property="HorizontalOptions" Value="Start" />
+      <Setter Property="Aspect" Value="AspectFit" />
+      <Setter Property="Padding" Value="13" />
+    </Style>
+    <Style TargetType="ImageButton" BasedOn="{StaticResource IconButton}" />
+    <Style x:Key="DeleteButton" TargetType="ImageButton" BasedOn="{StaticResource IconButton}">
+      <Setter Property="BackgroundColor" Value="#A12B43" />
+    </Style>
+
+</ResourceDictionary>

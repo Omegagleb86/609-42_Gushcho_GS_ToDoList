@@ -1,9 +1,10 @@
-﻿namespace ToDoList;
+namespace ToDoList;
 
 public partial class AppShell : Shell
 {
-	public AppShell()
-	{
-		InitializeComponent();
-	}
+    public AppShell(MainPage page)
+    {
+        InitializeComponent();
+        MainContent.Content = page;
+    }
 }
