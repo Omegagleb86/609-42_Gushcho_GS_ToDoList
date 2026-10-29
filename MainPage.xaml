@@ -1,174 +1,209 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="ToDoList.MainPage"
-             Title="Мои задачи"
-             BackgroundColor="{AppThemeBinding Light=#F5F6FA, Dark=#14141C}">
-    <ContentPage.Resources>
-        <Style TargetType="Label">
-            <Setter Property="TextColor" Value="{AppThemeBinding Light=#202238, Dark=#F2F2FA}" />
-        </Style>
-        <Style x:Key="SectionTitle" TargetType="Label">
-            <Setter Property="FontSize" Value="20" />
-            <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="SemanticProperties.HeadingLevel" Value="Level2" />
-        </Style>
-        <Style TargetType="Border">
-            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark=#20202C}" />
-            <Setter Property="Stroke" Value="{AppThemeBinding Light=#E1E3EE, Dark=#3A3A4C}" />
-            <Setter Property="StrokeShape" Value="RoundRectangle 16" />
-            <Setter Property="Padding" Value="18" />
-        </Style>
-        <Style TargetType="Entry">
-            <Setter Property="TextColor" Value="{AppThemeBinding Light=#202238, Dark=#F2F2FA}" />
-            <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light=#72758A, Dark=#A5A5BA}" />
-            <Setter Property="MinimumHeightRequest" Value="48" />
-        </Style>
-        <Style TargetType="Picker">
-            <Setter Property="TextColor" Value="{AppThemeBinding Light=#202238, Dark=#F2F2FA}" />
-            <Setter Property="TitleColor" Value="{AppThemeBinding Light=#72758A, Dark=#A5A5BA}" />
-            <Setter Property="MinimumHeightRequest" Value="48" />
-        </Style>
-        <Style TargetType="Button">
-            <Setter Property="BackgroundColor" Value="#6554D9" />
-            <Setter Property="TextColor" Value="White" />
-            <Setter Property="CornerRadius" Value="12" />
-            <Setter Property="MinimumHeightRequest" Value="48" />
-            <Setter Property="Padding" Value="12,8" />
-        </Style>
-        <Style x:Key="DeleteButton" TargetType="Button">
-            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FCEBED, Dark=#442831}" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light=#B52C48, Dark=#FFB0C0}" />
-            <Setter Property="CornerRadius" Value="12" />
-            <Setter Property="MinimumHeightRequest" Value="48" />
-            <Setter Property="Padding" Value="12,8" />
-        </Style>
-    </ContentPage.Resources>
-
-    <ScrollView>
-        <VerticalStackLayout Padding="20,24" Spacing="20" MaximumWidthRequest="760" HorizontalOptions="Fill">
-            <VerticalStackLayout Spacing="6">
-                <Label Text="Мои задачи" FontSize="32" FontAttributes="Bold"
-                       SemanticProperties.HeadingLevel="Level1" />
-                <Label Text="Планируйте дела, выбирайте категории и разбивайте задачи на шаги."
-                       FontSize="15" />
-                <Label Text="Макет интерфейса · действия пока не подключены" FontSize="12" />
-            </VerticalStackLayout>
-
-            <Border>
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="Новая задача" Style="{StaticResource SectionTitle}" />
-                    <Label Text="Название задачи" />
-                    <Entry x:Name="TaskNameEntry" Placeholder="Что нужно сделать?"
-                           SemanticProperties.Description="Название новой задачи" />
-                    <Label Text="Категория" />
-                    <Picker x:Name="TaskCategoryPicker" Title="Выберите категорию">
-                        <Picker.Items>
-                            <x:String>Без категории</x:String>
-                            <x:String>Учёба</x:String>
-                            <x:String>Личное</x:String>
-                        </Picker.Items>
-                    </Picker>
-                    <Button x:Name="AddTaskButton" Text="Добавить задачу" />
-                </VerticalStackLayout>
-            </Border>
-
-            <Border>
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="Категории" Style="{StaticResource SectionTitle}" />
-                    <Label Text="Создайте категорию для похожих дел." />
-                    <Entry x:Name="CategoryNameEntry" Placeholder="Название новой категории"
-                           SemanticProperties.Description="Название новой категории" />
-                    <Button x:Name="AddCategoryButton" Text="Создать категорию" />
-                    <Label Text="Примеры: Учёба · Личное" FontSize="13" />
-                </VerticalStackLayout>
-            </Border>
-
-            <Label Text="Список задач" Style="{StaticResource SectionTitle}" />
-            <!-- Статические примеры для просмотра всех элементов интерфейса.
-                 При подключении MVVM заменить их списком с шаблоном элемента. -->
-            <Border>
-                <VerticalStackLayout Spacing="14">
-                    <Label Text="Подготовить учебный проект" FontSize="18" FontAttributes="Bold" />
-                    <Label Text="Не выполнена" FontSize="13" />
-                    <Label Text="Категория задачи" />
-                    <Picker Title="Категория задачи" SelectedIndex="1">
-                        <Picker.Items>
-                            <x:String>Без категории</x:String>
-                            <x:String>Учёба</x:String>
-                            <x:String>Личное</x:String>
-                        </Picker.Items>
-                    </Picker>
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                        <Button Text="Выполнить" SemanticProperties.Description="Отметить задачу Подготовить учебный проект выполненной" />
-                        <Button Grid.Column="1" Text="Удалить" Style="{StaticResource DeleteButton}"
-                                SemanticProperties.Description="Удалить задачу Подготовить учебный проект" />
-                    </Grid>
-
-                    <BoxView HeightRequest="1" Color="{AppThemeBinding Light=#E1E3EE, Dark=#3A3A4C}" />
-                    <Label Text="Подзадачи" FontAttributes="Bold" />
-                    <Border Padding="12" Margin="12,0,0,0">
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="Сверстать главный экран" FontAttributes="Bold" />
-                            <Label Text="Не выполнена" FontSize="12" />
-                            <Picker Title="Категория подзадачи" SelectedIndex="1">
-                                <Picker.Items>
-                                    <x:String>Без категории</x:String>
-                                    <x:String>Учёба</x:String>
-                                    <x:String>Личное</x:String>
-                                </Picker.Items>
-                            </Picker>
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                <Button Text="Выполнить" SemanticProperties.Description="Отметить подзадачу Сверстать главный экран выполненной" />
-                                <Button Grid.Column="1" Text="Удалить" Style="{StaticResource DeleteButton}"
-                                        SemanticProperties.Description="Удалить подзадачу Сверстать главный экран" />
-                            </Grid>
-                        </VerticalStackLayout>
-                    </Border>
-                    <Label Text="Новая подзадача" FontAttributes="Bold" />
-                    <Entry Placeholder="Название подзадачи" SemanticProperties.Description="Название подзадачи для учебного проекта" />
-                    <Picker Title="Категория подзадачи">
-                        <Picker.Items>
-                            <x:String>Без категории</x:String>
-                            <x:String>Учёба</x:String>
-                            <x:String>Личное</x:String>
-                        </Picker.Items>
-                    </Picker>
-                    <Button Text="Добавить подзадачу" />
-                </VerticalStackLayout>
-            </Border>
-
-            <Border>
-                <VerticalStackLayout Spacing="14">
-                    <Label Text="Составить план на неделю" FontSize="18" FontAttributes="Bold" TextDecorations="Strikethrough" />
-                    <Label Text="Выполнена" TextColor="{AppThemeBinding Light=#24734D, Dark=#8EDDB0}" FontSize="13" />
-                    <Label Text="Категория задачи" />
-                    <Picker Title="Категория задачи" SelectedIndex="2">
-                        <Picker.Items>
-                            <x:String>Без категории</x:String>
-                            <x:String>Учёба</x:String>
-                            <x:String>Личное</x:String>
-                        </Picker.Items>
-                    </Picker>
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                        <Button Text="Не выполнена" SemanticProperties.Description="Вернуть задачу Составить план на неделю в невыполненные" />
-                        <Button Grid.Column="1" Text="Удалить" Style="{StaticResource DeleteButton}"
-                                SemanticProperties.Description="Удалить задачу Составить план на неделю" />
-                    </Grid>
-                    <BoxView HeightRequest="1" Color="{AppThemeBinding Light=#E1E3EE, Dark=#3A3A4C}" />
-                    <Label Text="Подзадачи" FontAttributes="Bold" />
-                    <Label Text="Подзадач пока нет" FontSize="13" />
-                    <Entry Placeholder="Название подзадачи" SemanticProperties.Description="Название подзадачи для плана на неделю" />
-                    <Picker Title="Категория подзадачи">
-                        <Picker.Items>
-                            <x:String>Без категории</x:String>
-                            <x:String>Учёба</x:String>
-                            <x:String>Личное</x:String>
-                        </Picker.Items>
-                    </Picker>
-                    <Button Text="Добавить подзадачу" />
-                </VerticalStackLayout>
-            </Border>
+  xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" x:Class="ToDoList.MainPage"
+  Title="Мои задачи" BackgroundColor="{AppThemeBinding Light=#F5F6FA, Dark=#14141C}">
+  <ContentPage.Resources>
+    <Style TargetType="Label">
+      <Setter Property="TextColor" Value="{AppThemeBinding Light=#202238, Dark=#F2F2FA}" />
+    </Style>
+    <Style x:Key="SectionTitle" TargetType="Label">
+      <Setter Property="FontSize" Value="20" />
+      <Setter Property="FontAttributes" Value="Bold" />
+      <Setter Property="SemanticProperties.HeadingLevel" Value="Level2" />
+    </Style>
+    <Style TargetType="Border">
+      <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark=#20202C}" />
+      <Setter Property="Stroke" Value="{AppThemeBinding Light=#E1E3EE, Dark=#3A3A4C}" />
+      <Setter Property="StrokeShape" Value="RoundRectangle 16" />
+      <Setter Property="Padding" Value="18" />
+    </Style>
+    <Style TargetType="Entry">
+      <Setter Property="TextColor" Value="{AppThemeBinding Light=#202238, Dark=#F2F2FA}" />
+      <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light=#72758A, Dark=#A5A5BA}" />
+      <Setter Property="MinimumHeightRequest" Value="48" />
+    </Style>
+    <Style TargetType="Picker">
+      <Setter Property="TextColor" Value="{AppThemeBinding Light=#202238, Dark=#F2F2FA}" />
+      <Setter Property="TitleColor" Value="{AppThemeBinding Light=#72758A, Dark=#A5A5BA}" />
+      <Setter Property="MinimumHeightRequest" Value="48" />
+    </Style>
+    <Style x:Key="IconButton" TargetType="ImageButton">
+      <Setter Property="BackgroundColor" Value="#6554D9" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="WidthRequest" Value="48" />
+      <Setter Property="HeightRequest" Value="48" />
+      <Setter Property="MinimumWidthRequest" Value="48" />
+      <Setter Property="MinimumHeightRequest" Value="48" />
+      <Setter Property="HorizontalOptions" Value="Start" />
+      <Setter Property="Aspect" Value="AspectFit" />
+      <Setter Property="Padding" Value="13" />
+    </Style>
+    <Style TargetType="ImageButton" BasedOn="{StaticResource IconButton}" />
+    <Style x:Key="DeleteButton" TargetType="ImageButton" BasedOn="{StaticResource IconButton}">
+      <Setter Property="BackgroundColor" Value="#A12B43" />
+    </Style>
+  </ContentPage.Resources>
+  <ScrollView>
+    <VerticalStackLayout Padding="20,24" Spacing="20" MaximumWidthRequest="760"
+      HorizontalOptions="Fill">
+      <VerticalStackLayout Spacing="6">
+        <Label Text="Мои задачи" FontSize="32" FontAttributes="Bold"
+          SemanticProperties.HeadingLevel="Level1" />
+        <Label Text="Планируйте дела, выбирайте категории и разбивайте задачи на шаги."
+          FontSize="15" />
+        <Label Text="Макет интерфейса · действия пока не подключены" FontSize="12" />
+      </VerticalStackLayout>
+      <Border>
+        <VerticalStackLayout Spacing="12">
+          <Label Text="Новая задача" Style="{StaticResource SectionTitle}" />
+          <Label Text="Название задачи" />
+          <Grid ColumnDefinitions="*,48" ColumnSpacing="6">
+            <Entry x:Name="TaskNameEntry" Placeholder="Что нужно сделать?"
+              SemanticProperties.Description="Название новой задачи" MinimumWidthRequest="0"
+              VerticalOptions="Center" />
+            <ImageButton x:Name="AddTaskButton" Source="add.png"
+              SemanticProperties.Description="Добавить задачу"
+              ToolTipProperties.Text="Добавить задачу" Grid.Column="1" />
+          </Grid>
+          <Label Text="Категория" />
+          <Picker x:Name="TaskCategoryPicker" Title="Выберите категорию">
+            <Picker.Items>
+              <x:String>Без категории</x:String>
+              <x:String>Учёба</x:String>
+              <x:String>Личное</x:String>
+            </Picker.Items>
+          </Picker>
         </VerticalStackLayout>
-    </ScrollView>
+      </Border>
+      <Border>
+        <VerticalStackLayout Spacing="12">
+          <Label Text="Категории" Style="{StaticResource SectionTitle}" />
+          <Label Text="Создайте категорию для похожих дел." />
+          <Grid ColumnDefinitions="*,48" ColumnSpacing="6">
+            <Entry x:Name="CategoryNameEntry" Placeholder="Название новой категории"
+              SemanticProperties.Description="Название новой категории" MinimumWidthRequest="0"
+              VerticalOptions="Center" />
+            <ImageButton x:Name="AddCategoryButton" Source="add.png"
+              SemanticProperties.Description="Создать категорию"
+              ToolTipProperties.Text="Создать категорию" Grid.Column="1" />
+          </Grid>
+          <Label Text="Примеры: Учёба · Личное" FontSize="13" />
+        </VerticalStackLayout>
+      </Border>
+      <Label Text="Список задач" Style="{StaticResource SectionTitle}" />
+      <Border>
+        <VerticalStackLayout Spacing="14">
+          <Grid ColumnDefinitions="48,*,48,48" ColumnSpacing="6">
+            <ImageButton Source="radio_notactive.png" ToolTipProperties.Text="Отметить выполненной"
+              SemanticProperties.Description="Отметить задачу Подготовить учебный проект выполненной" />
+            <Entry Grid.Column="1" Text="Подготовить учебный проект" MinimumWidthRequest="0"
+              VerticalOptions="Center"
+              SemanticProperties.Description="Название: Подготовить учебный проект" />
+            <ImageButton Grid.Column="2" Source="add.png"
+              ToolTipProperties.Text="Добавить подзадачу"
+              SemanticProperties.Description="Добавить подзадачу к задаче Подготовить учебный проект" />
+            <ImageButton Grid.Column="3" Source="delete.png" ToolTipProperties.Text="Удалить"
+              Style="{StaticResource DeleteButton}"
+              SemanticProperties.Description="Удалить задачу Подготовить учебный проект" />
+          </Grid>
+          <Label Text="Не выполнена" FontSize="13" />
+          <Label Text="Категория задачи" />
+          <Picker Title="Категория задачи" SelectedIndex="1">
+            <Picker.Items>
+              <x:String>Без категории</x:String>
+              <x:String>Учёба</x:String>
+              <x:String>Личное</x:String>
+            </Picker.Items>
+          </Picker>
+          <BoxView HeightRequest="3" Color="{AppThemeBinding Light=#E1E3EE, Dark=#3A3A4C}" />
+          <Label Text="Подзадачи" FontAttributes="Bold" />
+          <Border Padding="6" Margin="0">
+            <VerticalStackLayout Spacing="10">
+              <Grid ColumnDefinitions="48,*,48,48" ColumnSpacing="6">
+                <ImageButton Source="radio_notactive.png"
+                  ToolTipProperties.Text="Отметить выполненной"
+                  SemanticProperties.Description="Отметить подзадачу Сверстать главный экран выполненной" />
+                <Entry Grid.Column="1" Text="Сверстать главный экран" MinimumWidthRequest="0"
+                  VerticalOptions="Center"
+                  SemanticProperties.Description="Название: Сверстать главный экран" />
+                <ImageButton Grid.Column="2" Source="add.png"
+                  ToolTipProperties.Text="Добавить подзадачу"
+                  SemanticProperties.Description="Добавить подзадачу к задаче Сверстать главный экран" />
+                <ImageButton Grid.Column="3" Source="delete.png" ToolTipProperties.Text="Удалить"
+                  Style="{StaticResource DeleteButton}"
+                  SemanticProperties.Description="Удалить подзадачу Сверстать главный экран" />
+              </Grid>
+              <Label Text="Не выполнена" FontSize="12" />
+              <Picker Title="Категория подзадачи" SelectedIndex="1">
+                <Picker.Items>
+                  <x:String>Без категории</x:String>
+                  <x:String>Учёба</x:String>
+                  <x:String>Личное</x:String>
+                </Picker.Items>
+              </Picker>
+            </VerticalStackLayout>
+          </Border>
+          <Label Text="Новая подзадача" FontAttributes="Bold" />
+          <Grid ColumnDefinitions="*,48" ColumnSpacing="6">
+            <Entry Placeholder="Название подзадачи"
+              SemanticProperties.Description="Название подзадачи для учебного проекта"
+              MinimumWidthRequest="0" VerticalOptions="Center" />
+            <ImageButton Source="add.png" SemanticProperties.Description="Добавить подзадачу"
+              ToolTipProperties.Text="Добавить подзадачу" Grid.Column="1" />
+          </Grid>
+          <Picker Title="Категория подзадачи">
+            <Picker.Items>
+              <x:String>Без категории</x:String>
+              <x:String>Учёба</x:String>
+              <x:String>Личное</x:String>
+            </Picker.Items>
+          </Picker>
+        </VerticalStackLayout>
+      </Border>
+      <Border>
+        <VerticalStackLayout Spacing="14">
+          <Grid ColumnDefinitions="48,*,48,48" ColumnSpacing="6">
+            <ImageButton Source="radio_active.png" ToolTipProperties.Text="Отметить невыполненной"
+              SemanticProperties.Description="Вернуть задачу Составить план на неделю в невыполненные" />
+            <Entry Grid.Column="1" Text="Составить план на неделю" MinimumWidthRequest="0"
+              VerticalOptions="Center"
+              SemanticProperties.Description="Название: Составить план на неделю" />
+            <ImageButton Grid.Column="2" Source="add.png"
+              ToolTipProperties.Text="Добавить подзадачу"
+              SemanticProperties.Description="Добавить подзадачу к задаче Составить план на неделю" />
+            <ImageButton Grid.Column="3" Source="delete.png" ToolTipProperties.Text="Удалить"
+              Style="{StaticResource DeleteButton}"
+              SemanticProperties.Description="Удалить задачу Составить план на неделю" />
+          </Grid>
+          <Label Text="Выполнена" TextColor="{AppThemeBinding Light=#24734D, Dark=#8EDDB0}"
+            FontSize="13" />
+          <Label Text="Категория задачи" />
+          <Picker Title="Категория задачи" SelectedIndex="2">
+            <Picker.Items>
+              <x:String>Без категории</x:String>
+              <x:String>Учёба</x:String>
+              <x:String>Личное</x:String>
+            </Picker.Items>
+          </Picker>
+          <BoxView HeightRequest="3" Color="{AppThemeBinding Light=#E1E3EE, Dark=#3A3A4C}" />
+          <Label Text="Подзадачи" FontAttributes="Bold" />
+          <Label Text="Подзадач пока нет" FontSize="13" />
+          <Grid ColumnDefinitions="*,48" ColumnSpacing="6">
+            <Entry Placeholder="Название подзадачи"
+              SemanticProperties.Description="Название подзадачи для плана на неделю"
+              MinimumWidthRequest="0" VerticalOptions="Center" />
+            <ImageButton Source="add.png" SemanticProperties.Description="Добавить подзадачу"
+              ToolTipProperties.Text="Добавить подзадачу" Grid.Column="1" />
+          </Grid>
+          <Picker Title="Категория подзадачи">
+            <Picker.Items>
+              <x:String>Без категории</x:String>
+              <x:String>Учёба</x:String>
+              <x:String>Личное</x:String>
+            </Picker.Items>
+          </Picker>
+        </VerticalStackLayout>
+      </Border>
+    </VerticalStackLayout>
+  </ScrollView>
 </ContentPage>
