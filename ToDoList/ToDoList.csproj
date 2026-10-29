@@ -73,7 +73,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\ToDoList.Models\ToDoList.Models.csproj" />
+	  <ProjectReference Include="../ToDoList.Models/ToDoList.Models.csproj" />
+      <ProjectReference Include="../ToDoList.Core/ToDoList.Core.csproj" />
+      <ProjectReference Include="../ToDoList.Data/ToDoList.Data.csproj" />
 	</ItemGroup>
 
 </Project>

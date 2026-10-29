@@ -1,12 +1,13 @@
 using System.Collections.ObjectModel;
-using ToDoList.Data;
+using ToDoList.Core;
 using ToDoList.Models;
 
 namespace ToDoList.ViewModels;
 
 public sealed class MainViewModel : ObservableObject
 {
-    private readonly ITodoRepository repository;
+    private readonly TodoService service;
+    public string StorageDescription { get; }
     private readonly SemaphoreSlim storageLock = new(1, 1);
     private bool loaded;
     private string newTaskTitle = "", newCategoryName = "", message = "";
@@ -28,9 +29,10 @@ public sealed class MainViewModel : ObservableObject
     public AsyncCommand SaveCommand { get; }
     public AsyncCommand LoadCommand { get; }
 
-    public MainViewModel(ITodoRepository repository)
+    public MainViewModel(TodoService service, string storageDescription = "Задачи сохраняются в памяти до закрытия приложения.")
     {
-        this.repository = repository;
+        this.service = service;
+        StorageDescription = storageDescription;
         AddTaskCommand = Command(async () =>
         {
             if (!HasLoaded || !ValidTitle(NewTaskTitle)) return;
@@ -43,8 +45,7 @@ public sealed class MainViewModel : ObservableObject
             if (!HasLoaded) return;
             var name = NewCategoryName.Trim();
             if (!ValidTitle(name)) return;
-            if (Categories.Any(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase)))
-            { Message = "Категория с таким названием уже существует."; return; }
+            TodoRules.EnsureUniqueCategory(name, Categories);
             var category = new Category(Guid.NewGuid(), name);
             Categories.Add(category);
             SelectedCategory = category;
@@ -54,7 +55,7 @@ public sealed class MainViewModel : ObservableObject
         LoadCommand = Command(async () =>
         {
             if (loaded) return;
-            var state = await repository.LoadAsync();
+            var state = await service.LoadAsync();
             Categories.Clear();
             Categories.Add(Category.None);
             foreach (var category in state.Categories) Categories.Add(category);
@@ -72,13 +73,13 @@ public sealed class MainViewModel : ObservableObject
     }
 
     public AsyncCommand Command(Func<Task> action) => new(action, error =>
-        Message = "Не удалось выполнить операцию. Повторите загрузку или сохранение. " + error.Message);
+        Message = error is ArgumentException ? error.Message
+            : "Не удалось выполнить операцию. Повторите загрузку или сохранение. " + error.Message);
 
     public bool ValidTitle(string? title)
     {
-        if (!string.IsNullOrWhiteSpace(title)) { Message = ""; return true; }
-        Message = "Введите непустое название.";
-        return false;
+        try { TodoRules.NormalizeName(title); Message = ""; return true; }
+        catch (ArgumentException error) { Message = error.Message; return false; }
     }
 
     public static Guid? CategoryId(Category? category) => category is null || category.Id == Guid.Empty ? null : category.Id;
@@ -90,7 +91,7 @@ public sealed class MainViewModel : ObservableObject
         await storageLock.WaitAsync();
         try
         {
-            await repository.SaveAsync(new TodoState(Categories.Where(c => c.Id != Guid.Empty).ToArray(), Tasks.Select(t => t.ToModel()).ToArray()));
+            await service.SaveAsync(new TodoState(Categories.Where(c => c.Id != Guid.Empty).ToArray(), Tasks.Select(t => t.ToModel()).ToArray()));
             Message = "";
         }
         finally { storageLock.Release(); }

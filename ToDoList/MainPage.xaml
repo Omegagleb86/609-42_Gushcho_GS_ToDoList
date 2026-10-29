@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
  xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
- xmlns:models="clr-namespace:ToDoList.Models" xmlns:vm="clr-namespace:ToDoList.ViewModels" xmlns:views="clr-namespace:ToDoList.Views"
+ xmlns:models="clr-namespace:ToDoList.Models;assembly=ToDoList.Models" xmlns:vm="clr-namespace:ToDoList.ViewModels" xmlns:views="clr-namespace:ToDoList.Views"
  x:Class="ToDoList.MainPage" x:DataType="vm:MainViewModel" Title="Мои задачи"
  BackgroundColor="{AppThemeBinding Light=#F5F6FA, Dark=#14141C}">
  <ContentPage.Resources>
@@ -10,7 +10,7 @@
  <ScrollView>
   <VerticalStackLayout Padding="20,24" Spacing="20" MaximumWidthRequest="760" HorizontalOptions="Fill">
    <Label Text="Мои задачи" FontSize="32" FontAttributes="Bold" />
-   <Label Text="Задачи сохраняются в памяти до закрытия приложения." FontSize="13" />
+   <Label Text="{Binding StorageDescription}" FontSize="13" />
    <Border IsEnabled="{Binding HasLoaded}">
     <VerticalStackLayout Spacing="12">
      <Label Text="Новая задача" Style="{StaticResource SectionTitle}" />

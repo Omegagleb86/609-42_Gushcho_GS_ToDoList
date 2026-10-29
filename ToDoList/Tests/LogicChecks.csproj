@@ -6,8 +6,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../Models/*.cs" Link="Models/%(Filename)%(Extension)" />
-    <Compile Include="../Data/*.cs" Link="Data/%(Filename)%(Extension)" />
+    <ProjectReference Include="../../ToDoList.Models/ToDoList.Models.csproj" />
+    <ProjectReference Include="../../ToDoList.Core/ToDoList.Core.csproj" />
+    <ProjectReference Include="../../ToDoList.Data/ToDoList.Data.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.14" />
     <Compile Include="../ViewModels/*.cs" Link="ViewModels/%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>
