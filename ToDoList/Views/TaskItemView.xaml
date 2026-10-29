@@ -13,7 +13,6 @@
     <ImageButton Grid.Column="2" Source="add.png" Command="{Binding ShowChildCommand}" SemanticProperties.Description="Открыть или скрыть создание подзадачи" ToolTipProperties.Text="Добавить подзадачу" />
     <ImageButton Grid.Column="3" Source="delete.png" Style="{StaticResource DeleteButton}" Command="{Binding DeleteCommand}" SemanticProperties.Description="Удалить задачу вместе с подзадачами" />
    </Grid>
-   <Label Text="{Binding StatusText}" FontSize="12" />
    <Picker Title="Без категории" ItemsSource="{Binding Categories}" ItemDisplayBinding="{Binding Name, x:DataType=models:Category}" SelectedItem="{Binding SelectedCategory}" />
    <VerticalStackLayout Spacing="6" IsVisible="{Binding IsAddingChild}">
     <Label Text="Новая подзадача" FontAttributes="Bold" />
