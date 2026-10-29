@@ -2,7 +2,7 @@ using ToDoList.Models;
 
 namespace ToDoList.Core;
 
-// Application rules do not depend on EF, MySQL, or MAUI.
+// Application rules do not depend on EF, a database provider, or MAUI.
 public sealed class TodoService(ITodoRepository repository)
 {
     public async Task<TodoState> LoadAsync()

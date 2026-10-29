@@ -22,17 +22,12 @@ public static class MauiProgram
 		builder.Logging.AddDebug();
 #endif
 
-        // Development configuration: do not commit real credentials to the repository.
-        var connection = Environment.GetEnvironmentVariable("TODOLIST_MYSQL_CONNECTION");
-        var useMySql = !string.IsNullOrWhiteSpace(connection);
-        builder.Services.AddSingleton<ITodoRepository>(_ => useMySql
-            ? MySqlTodoRepositoryFactory.Create(connection!)
-            : new InMemoryTodoRepository());
+        // Store the database in the platform's writable application data directory.
+        builder.Services.AddSingleton<ITodoRepository>(_ =>
+            SqliteTodoRepositoryFactory.Create(Path.Combine(FileSystem.AppDataDirectory, "todolist.db3")));
         builder.Services.AddSingleton<TodoService>();
         builder.Services.AddSingleton(provider => new MainViewModel(
-            provider.GetRequiredService<TodoService>(), useMySql
-                ? "Задачи сохраняются в MySQL."
-                : "MySQL не настроен. Задачи сохраняются в памяти до закрытия приложения."));
+            provider.GetRequiredService<TodoService>(), "Задачи сохраняются на этом устройстве в SQLite."));
         builder.Services.AddTransient<MainPage>();
         builder.Services.AddSingleton<AppShell>();
 
