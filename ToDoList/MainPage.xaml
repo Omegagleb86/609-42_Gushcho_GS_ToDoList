@@ -28,6 +28,19 @@
       <Entry Text="{Binding NewCategoryName}" Placeholder="Название категории" MinimumWidthRequest="0" ReturnCommand="{Binding AddCategoryCommand}" />
       <ImageButton Grid.Column="1" Source="add.png" Command="{Binding AddCategoryCommand}" SemanticProperties.Description="Создать категорию" />
      </Grid>
+     <VerticalStackLayout Spacing="6" BindableLayout.ItemsSource="{Binding CategoryItems}">
+      <BindableLayout.EmptyView><Label Text="Категорий пока нет." FontSize="13" /></BindableLayout.EmptyView>
+      <BindableLayout.ItemTemplate>
+       <DataTemplate x:DataType="vm:CategoryViewModel">
+        <Grid ColumnDefinitions="*,48" ColumnSpacing="6">
+         <Label Text="{Binding Name}" VerticalOptions="Center" LineBreakMode="TailTruncation" />
+         <ImageButton Grid.Column="1" Source="delete.png" Style="{StaticResource DeleteButton}"
+          Command="{Binding DeleteCommand}" ToolTipProperties.Text="Удалить категорию"
+          SemanticProperties.Description="{Binding Name, StringFormat='Удалить категорию {0}'}" />
+        </Grid>
+       </DataTemplate>
+      </BindableLayout.ItemTemplate>
+     </VerticalStackLayout>
     </VerticalStackLayout>
    </Border>
    <Label Text="{Binding Message}" TextColor="{AppThemeBinding Light=#A12B43, Dark=#FFB0C0}" />

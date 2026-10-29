@@ -10,10 +10,12 @@ public sealed class MainViewModel : ObservableObject
     public string StorageDescription { get; }
     private readonly SemaphoreSlim storageLock = new(1, 1);
     private bool loaded;
+    private bool changingCategories;
     private string newTaskTitle = "", newCategoryName = "", message = "";
     private Category? selectedCategory = Category.None;
     public ObservableCollection<Category> Categories { get; } = [Category.None];
     public ObservableCollection<TaskViewModel> Tasks { get; } = [];
+    public ObservableCollection<CategoryViewModel> CategoryItems { get; } = [];
     public string NewTaskTitle { get => newTaskTitle; set => SetProperty(ref newTaskTitle, value); }
     public string NewCategoryName { get => newCategoryName; set => SetProperty(ref newCategoryName, value); }
     public Category? SelectedCategory { get => selectedCategory; set => SetProperty(ref selectedCategory, value); }
@@ -33,6 +35,12 @@ public sealed class MainViewModel : ObservableObject
     {
         this.service = service;
         StorageDescription = storageDescription;
+        Categories.CollectionChanged += (_, _) =>
+        {
+            CategoryItems.Clear();
+            foreach (var category in Categories.Where(c => c.Id != Guid.Empty))
+                CategoryItems.Add(new CategoryViewModel(category.Name, Command(() => DeleteCategoryAsync(category))));
+        };
         AddTaskCommand = Command(async () =>
         {
             if (!HasLoaded || !ValidTitle(NewTaskTitle)) return;
@@ -84,7 +92,26 @@ public sealed class MainViewModel : ObservableObject
 
     public static Guid? CategoryId(Category? category) => category is null || category.Id == Guid.Empty ? null : category.Id;
 
-    public void RequestSave() => Command(SaveAsync).Execute(null);
+    private async Task DeleteCategoryAsync(Category category)
+    {
+        if (!HasLoaded || category.Id == Guid.Empty || !Categories.Contains(category)) return;
+        // Pickers may change their selection when ItemsSource changes. Save the complete
+        // update once, after all task references and form selections have been cleared.
+        changingCategories = true;
+        try
+        {
+            foreach (var task in Tasks) task.ClearCategory(category.Id);
+            if (SelectedCategory?.Id == category.Id) SelectedCategory = Category.None;
+            Categories.Remove(category);
+        }
+        finally { changingCategories = false; }
+        await SaveAsync();
+    }
+
+    public void RequestSave()
+    {
+        if (!changingCategories) Command(SaveAsync).Execute(null);
+    }
 
     public async Task SaveAsync()
     {

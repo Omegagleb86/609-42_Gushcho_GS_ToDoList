@@ -71,6 +71,15 @@ public sealed class TaskViewModel : ObservableObject
         });
     }
 
+    // Called as part of a category removal; the owner saves the entire change once.
+    internal void ClearCategory(Guid categoryId)
+    {
+        if (selectedCategory?.Id == categoryId)
+            SetProperty(ref selectedCategory, Category.None, nameof(SelectedCategory));
+        if (newChildCategory?.Id == categoryId) NewChildCategory = Category.None;
+        foreach (var child in Children) child.ClearCategory(categoryId);
+    }
+
     public TodoTask ToModel() => new(id, savedTitle, completed, MainViewModel.CategoryId(SelectedCategory),
         Children.Select(c => c.ToModel()).ToArray());
 }
