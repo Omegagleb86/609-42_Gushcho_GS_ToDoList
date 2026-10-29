@@ -48,6 +48,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<!-- Ignore build artifacts left by the former console test project. -->
         <Compile Remove="Tests/**/*.cs" />
         <None Remove="Tests/**" />
 		<!-- App Icon -->
