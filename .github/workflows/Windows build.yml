@@ -1,0 +1,76 @@
+name: Windows build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Test and publish Windows x64
+    runs-on: windows-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      DOTNET_NOLOGO: '1'
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install MAUI Windows workload
+        run: dotnet workload install maui-windows
+
+      - name: Run MSTest tests
+        run: >-
+          dotnet test ToDoList.Tests/ToDoList.Tests.csproj
+          --configuration Release
+          --logger "trx;LogFileName=tests.trx"
+          --results-directory artifacts/test-results
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-test-results
+          path: artifacts/test-results/*.trx
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish Windows app
+        run: >-
+          dotnet publish ToDoList/ToDoList.csproj
+          --configuration Release
+          --framework net10.0-windows10.0.19041.0
+          -p:BuildWindowsOnly=true
+          -p:RuntimeIdentifierOverride=win-x64
+          -p:WindowsPackageType=None
+          -p:WindowsAppSDKSelfContained=true
+          --self-contained true
+          --output artifacts/windows-x64
+      - name: Verify application output
+        run: |
+          if (-not (Test-Path 'artifacts/windows-x64/ToDoList.exe')) {
+            throw 'Windows publish did not produce ToDoList.exe.'
+          }
+      - name: Upload Windows app
+        uses: actions/upload-artifact@v7
+        with:
+          name: ToDoList-Windows-x64
+          path: artifacts/windows-x64/
+          if-no-files-found: error
+          retention-days: 14
