@@ -14,8 +14,8 @@
     <VerticalStackLayout Spacing="12">
      <Label Text="Новая задача" Style="{StaticResource SectionTitle}" />
      <Grid ColumnDefinitions="*,48" ColumnSpacing="6">
-      <Entry Text="{Binding NewTaskTitle}" Placeholder="Что нужно сделать?" MinimumWidthRequest="0" ReturnCommand="{Binding AddTaskCommand}" />
-      <ImageButton Grid.Column="1" Source="add.png" Command="{Binding AddTaskCommand}" SemanticProperties.Description="Добавить задачу" />
+      <Entry Text="{Binding NewTaskTitle}" Placeholder="Что нужно сделать?" MinimumWidthRequest="0" ReturnCommand="{Binding AddTaskCommand}" ReturnCommandParameter="{Binding NewTaskRequest}" />
+      <ImageButton Grid.Column="1" Source="add.png" Command="{Binding AddTaskCommand}" CommandParameter="{Binding NewTaskRequest}" SemanticProperties.Description="Добавить задачу" />
      </Grid>
      <Picker Title="Без категории" ItemsSource="{Binding Categories}" ItemDisplayBinding="{Binding Name, x:DataType=models:Category}" SelectedItem="{Binding SelectedCategory}" />
     </VerticalStackLayout>
@@ -24,8 +24,8 @@
     <VerticalStackLayout Spacing="12">
      <Label Text="Категории" Style="{StaticResource SectionTitle}" />
      <Grid ColumnDefinitions="*,48" ColumnSpacing="6">
-      <Entry Text="{Binding NewCategoryName}" Placeholder="Название категории" MinimumWidthRequest="0" ReturnCommand="{Binding AddCategoryCommand}" />
-      <ImageButton Grid.Column="1" Source="add.png" Command="{Binding AddCategoryCommand}" SemanticProperties.Description="Создать категорию" />
+      <Entry Text="{Binding NewCategoryName}" Placeholder="Название категории" MinimumWidthRequest="0" ReturnCommand="{Binding AddCategoryCommand}" ReturnCommandParameter="{Binding NewCategoryRequest}" />
+      <ImageButton Grid.Column="1" Source="add.png" Command="{Binding AddCategoryCommand}" CommandParameter="{Binding NewCategoryRequest}" SemanticProperties.Description="Создать категорию" />
      </Grid>
      <VerticalStackLayout Spacing="6" BindableLayout.ItemsSource="{Binding CategoryItems}">
       <BindableLayout.EmptyView><Label Text="Категорий пока нет." FontSize="13" /></BindableLayout.EmptyView>

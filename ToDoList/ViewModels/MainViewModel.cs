@@ -16,9 +16,38 @@ public sealed class MainViewModel : ObservableObject
     public ObservableCollection<Category> Categories { get; } = [Category.None];
     public ObservableCollection<TaskViewModel> Tasks { get; } = [];
     public ObservableCollection<CategoryViewModel> CategoryItems { get; } = [];
-    public string NewTaskTitle { get => newTaskTitle; set => SetProperty(ref newTaskTitle, value); }
-    public string NewCategoryName { get => newCategoryName; set => SetProperty(ref newCategoryName, value); }
-    public Category? SelectedCategory { get => selectedCategory; set => SetProperty(ref selectedCategory, value); }
+    public TaskCreationRequest NewTaskRequest => new(NewTaskTitle, SelectedCategory);
+    public CategoryCreationRequest NewCategoryRequest => new(NewCategoryName);
+    public string NewTaskTitle
+    {
+        get => newTaskTitle;
+        set
+        {
+            if (!SetProperty(ref newTaskTitle, value)) return;
+            OnPropertyChanged(nameof(NewTaskRequest));
+            AddTaskCommand?.NotifyCanExecuteChanged();
+        }
+    }
+    public string NewCategoryName
+    {
+        get => newCategoryName;
+        set
+        {
+            if (!SetProperty(ref newCategoryName, value)) return;
+            OnPropertyChanged(nameof(NewCategoryRequest));
+            AddCategoryCommand?.NotifyCanExecuteChanged();
+        }
+    }
+    public Category? SelectedCategory
+    {
+        get => selectedCategory;
+        set
+        {
+            if (!SetProperty(ref selectedCategory, value)) return;
+            OnPropertyChanged(nameof(NewTaskRequest));
+            AddTaskCommand?.NotifyCanExecuteChanged();
+        }
+    }
     public string Message
     {
         get => message;
@@ -41,17 +70,18 @@ public sealed class MainViewModel : ObservableObject
             foreach (var category in Categories.Where(c => c.Id != Guid.Empty))
                 CategoryItems.Add(new CategoryViewModel(category.Name, Command(() => DeleteCategoryAsync(category))));
         };
-        AddTaskCommand = Command(async () =>
+        AddTaskCommand = Command(async parameter =>
         {
-            if (!HasLoaded || !ValidTitle(NewTaskTitle)) return;
-            Tasks.Add(new TaskViewModel(this, Tasks, new(Guid.NewGuid(), NewTaskTitle.Trim(), false, CategoryId(SelectedCategory), [])));
+            var request = (TaskCreationRequest)parameter!;
+            if (!ValidTitle(request.Title)) return;
+            Tasks.Add(new TaskViewModel(this, Tasks, new(Guid.NewGuid(), request.Title.Trim(), false, CategoryId(request.Category), [])));
             NewTaskTitle = "";
             await SaveAsync();
-        });
-        AddCategoryCommand = Command(async () =>
+        }, parameter => HasLoaded && parameter is TaskCreationRequest request && !string.IsNullOrWhiteSpace(request.Title));
+        AddCategoryCommand = Command(async parameter =>
         {
-            if (!HasLoaded) return;
-            var name = NewCategoryName.Trim();
+            var request = (CategoryCreationRequest)parameter!;
+            var name = request.Name.Trim();
             if (!ValidTitle(name)) return;
             TodoRules.EnsureUniqueCategory(name, Categories);
             var category = new Category(Guid.NewGuid(), name);
@@ -59,7 +89,7 @@ public sealed class MainViewModel : ObservableObject
             SelectedCategory = category;
             NewCategoryName = "";
             await SaveAsync();
-        });
+        }, parameter => HasLoaded && parameter is CategoryCreationRequest request && !string.IsNullOrWhiteSpace(request.Name));
         LoadCommand = Command(async () =>
         {
             if (loaded) return;
@@ -71,6 +101,8 @@ public sealed class MainViewModel : ObservableObject
             foreach (var task in state.Tasks) Tasks.Add(new TaskViewModel(this, Tasks, task));
             loaded = true;
             OnPropertyChanged(nameof(HasLoaded));
+            AddTaskCommand.NotifyCanExecuteChanged();
+            AddCategoryCommand.NotifyCanExecuteChanged();
             Message = "";
         });
         SaveCommand = Command(async () =>
@@ -80,9 +112,14 @@ public sealed class MainViewModel : ObservableObject
         });
     }
 
-    public AsyncCommand Command(Func<Task> action) => new(action, error =>
+    public AsyncCommand Command(Func<Task> action) => new(action, HandleError);
+
+    public AsyncCommand Command(Func<object?, Task> action, Func<object?, bool> canExecute) =>
+        new(action, HandleError, canExecute);
+
+    private void HandleError(Exception error) =>
         Message = error is ArgumentException ? error.Message
-            : "Не удалось выполнить операцию. Повторите загрузку или сохранение. " + error.Message);
+            : "Не удалось выполнить операцию. Повторите загрузку или сохранение. " + error.Message;
 
     public bool ValidTitle(string? title)
     {

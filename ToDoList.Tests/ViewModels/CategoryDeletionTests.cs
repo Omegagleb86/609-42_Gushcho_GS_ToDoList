@@ -17,7 +17,7 @@ public sealed class CategoryDeletionTests
         var vm = new MainViewModel(new TodoService(repository));
         await vm.LoadCommand.ExecuteAsync();
         vm.NewCategoryName = "Учёба";
-        await vm.AddCategoryCommand.ExecuteAsync();
+        await vm.AddCategoryCommand.ExecuteAsync(vm.NewCategoryRequest);
 
         await vm.CategoryItems.Single().DeleteCommand.ExecuteAsync();
 
@@ -27,7 +27,7 @@ public sealed class CategoryDeletionTests
         Assert.AreEqual(Category.None, vm.SelectedCategory);
         Assert.IsEmpty((await repository.LoadAsync()).Categories);
         vm.NewCategoryName = "Учёба";
-        await vm.AddCategoryCommand.ExecuteAsync();
+        await vm.AddCategoryCommand.ExecuteAsync(vm.NewCategoryRequest);
         Assert.HasCount(1, vm.CategoryItems);
         Assert.IsFalse(vm.HasMessage);
     }

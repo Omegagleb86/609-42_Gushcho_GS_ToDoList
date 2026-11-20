@@ -15,7 +15,17 @@ public sealed class TaskViewModel : ObservableObject
     public ObservableCollection<Category> Categories => owner.Categories;
     public ObservableCollection<TaskViewModel> Children { get; } = [];
     public string Title { get => title; set => SetProperty(ref title, value); }
-    public string NewChildTitle { get => newChildTitle; set => SetProperty(ref newChildTitle, value); }
+    public TaskCreationRequest NewChildRequest => new(NewChildTitle, NewChildCategory);
+    public string NewChildTitle
+    {
+        get => newChildTitle;
+        set
+        {
+            if (!SetProperty(ref newChildTitle, value)) return;
+            OnPropertyChanged(nameof(NewChildRequest));
+            AddChildCommand?.NotifyCanExecuteChanged();
+        }
+    }
     public bool IsAddingChild { get => isAddingChild; set => SetProperty(ref isAddingChild, value); }
     public string StatusIcon => completed ? "radio_active.png" : "radio_notactive.png";
     public string StatusText => completed ? "Выполнена" : "Не выполнена";
@@ -24,7 +34,16 @@ public sealed class TaskViewModel : ObservableObject
         get => selectedCategory;
         set { if (SetProperty(ref selectedCategory, value)) owner.RequestSave(); }
     }
-    public Category? NewChildCategory { get => newChildCategory; set => SetProperty(ref newChildCategory, value); }
+    public Category? NewChildCategory
+    {
+        get => newChildCategory;
+        set
+        {
+            if (!SetProperty(ref newChildCategory, value)) return;
+            OnPropertyChanged(nameof(NewChildRequest));
+            AddChildCommand?.NotifyCanExecuteChanged();
+        }
+    }
     public AsyncCommand ToggleCommand { get; }
     public AsyncCommand DeleteCommand { get; }
     public AsyncCommand ShowChildCommand { get; }
@@ -54,14 +73,15 @@ public sealed class TaskViewModel : ObservableObject
             NewChildCategory = SelectedCategory;
             return Task.CompletedTask;
         });
-        AddChildCommand = owner.Command(async () =>
+        AddChildCommand = owner.Command(async parameter =>
         {
-            if (!owner.ValidTitle(NewChildTitle)) return;
-            Children.Add(new TaskViewModel(owner, Children, new(Guid.NewGuid(), NewChildTitle.Trim(), false, MainViewModel.CategoryId(NewChildCategory), [])));
+            var request = (TaskCreationRequest)parameter!;
+            if (!owner.ValidTitle(request.Title)) return;
+            Children.Add(new TaskViewModel(owner, Children, new(Guid.NewGuid(), request.Title.Trim(), false, MainViewModel.CategoryId(request.Category), [])));
             NewChildTitle = "";
             IsAddingChild = false;
             await owner.SaveAsync();
-        });
+        }, parameter => owner.HasLoaded && parameter is TaskCreationRequest request && !string.IsNullOrWhiteSpace(request.Title));
         RenameCommand = owner.Command(async () =>
         {
             if (!owner.ValidTitle(Title)) { Title = savedTitle; return; }

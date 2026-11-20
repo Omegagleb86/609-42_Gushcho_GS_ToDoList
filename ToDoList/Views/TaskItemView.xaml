@@ -17,8 +17,8 @@
    <VerticalStackLayout Spacing="6" IsVisible="{Binding IsAddingChild}">
     <Label Text="Новая подзадача" FontAttributes="Bold" />
     <Grid ColumnDefinitions="*,48" ColumnSpacing="6">
-     <Entry Text="{Binding NewChildTitle}" Placeholder="Название подзадачи" MinimumWidthRequest="0" ReturnCommand="{Binding AddChildCommand}" />
-     <ImageButton Grid.Column="1" Source="add.png" Command="{Binding AddChildCommand}" SemanticProperties.Description="Добавить подзадачу" />
+     <Entry Text="{Binding NewChildTitle}" Placeholder="Название подзадачи" MinimumWidthRequest="0" ReturnCommand="{Binding AddChildCommand}" ReturnCommandParameter="{Binding NewChildRequest}" />
+     <ImageButton Grid.Column="1" Source="add.png" Command="{Binding AddChildCommand}" CommandParameter="{Binding NewChildRequest}" SemanticProperties.Description="Добавить подзадачу" />
     </Grid>
     <Picker Title="Без категории" ItemsSource="{Binding Categories}" ItemDisplayBinding="{Binding Name, x:DataType=models:Category}" SelectedItem="{Binding NewChildCategory}" />
    </VerticalStackLayout>

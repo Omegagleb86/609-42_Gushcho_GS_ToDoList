@@ -35,6 +35,19 @@
       <Setter Property="HorizontalOptions" Value="Start" />
       <Setter Property="Aspect" Value="AspectFit" />
       <Setter Property="Padding" Value="13" />
+      <Setter Property="VisualStateManager.VisualStateGroups">
+        <VisualStateGroupList>
+          <VisualStateGroup x:Name="CommonStates">
+            <VisualState x:Name="Normal" />
+            <VisualState x:Name="Disabled">
+              <VisualState.Setters>
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#8A8D99, Dark=#555866}" />
+                <Setter Property="Opacity" Value="0.45" />
+              </VisualState.Setters>
+            </VisualState>
+          </VisualStateGroup>
+        </VisualStateGroupList>
+      </Setter>
     </Style>
     <Style TargetType="ImageButton" BasedOn="{StaticResource IconButton}" />
     <Style x:Key="DeleteButton" TargetType="ImageButton" BasedOn="{StaticResource IconButton}">

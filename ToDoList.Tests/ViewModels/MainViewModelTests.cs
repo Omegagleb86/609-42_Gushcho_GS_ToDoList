@@ -11,15 +11,16 @@ namespace ToDoList.Tests.ViewModels;
 public sealed class MainViewModelTests
 {
     [TestMethod]
-    public async Task AddTaskCommand_BlankName_DoesNotAddTaskAndShowsError()
+    public async Task AddTaskCommand_BlankName_IsDisabledAndDoesNotAddTask()
     {
         var (vm, repository) = await CreateAsync();
         vm.NewTaskTitle = "   ";
 
-        await vm.AddTaskCommand.ExecuteAsync();
+        await vm.AddTaskCommand.ExecuteAsync(vm.NewTaskRequest);
 
         Assert.IsEmpty(vm.Tasks);
-        Assert.IsTrue(vm.HasMessage);
+        Assert.IsFalse(vm.AddTaskCommand.CanExecute(vm.NewTaskRequest));
+        Assert.IsFalse(vm.HasMessage);
         Assert.IsEmpty((await repository.LoadAsync()).Tasks);
     }
 
@@ -28,10 +29,10 @@ public sealed class MainViewModelTests
     {
         var (vm, repository) = await CreateAsync();
         vm.NewCategoryName = " Учёба ";
-        await vm.AddCategoryCommand.ExecuteAsync();
+        await vm.AddCategoryCommand.ExecuteAsync(vm.NewCategoryRequest);
         vm.NewCategoryName = "учёба";
 
-        await vm.AddCategoryCommand.ExecuteAsync();
+        await vm.AddCategoryCommand.ExecuteAsync(vm.NewCategoryRequest);
 
         Assert.HasCount(2, vm.Categories); // Includes the UI-only "Без категории".
         Assert.AreEqual("Учёба", vm.Categories[1].Name);
@@ -44,10 +45,10 @@ public sealed class MainViewModelTests
     {
         var (vm, repository) = await CreateAsync();
         vm.NewCategoryName = "Учёба";
-        await vm.AddCategoryCommand.ExecuteAsync();
+        await vm.AddCategoryCommand.ExecuteAsync(vm.NewCategoryRequest);
         vm.NewTaskTitle = " Проект ";
 
-        await vm.AddTaskCommand.ExecuteAsync();
+        await vm.AddTaskCommand.ExecuteAsync(vm.NewTaskRequest);
 
         var task = vm.Tasks.Single();
         Assert.AreEqual("Проект", task.Title);
@@ -61,15 +62,15 @@ public sealed class MainViewModelTests
     {
         var (vm, repository) = await CreateAsync();
         vm.NewTaskTitle = "Родитель";
-        await vm.AddTaskCommand.ExecuteAsync();
+        await vm.AddTaskCommand.ExecuteAsync(vm.NewTaskRequest);
         var parent = vm.Tasks.Single();
         await parent.ShowChildCommand.ExecuteAsync();
         parent.NewChildTitle = "Экран";
-        await parent.AddChildCommand.ExecuteAsync();
+        await parent.AddChildCommand.ExecuteAsync(parent.NewChildRequest);
         var child = parent.Children.Single();
         await child.ShowChildCommand.ExecuteAsync();
         child.NewChildTitle = "Кнопки";
-        await child.AddChildCommand.ExecuteAsync();
+        await child.AddChildCommand.ExecuteAsync(child.NewChildRequest);
 
         await child.ToggleCommand.ExecuteAsync();
 
@@ -161,7 +162,7 @@ public sealed class MainViewModelTests
         await vm.LoadCommand.ExecuteAsync();
         vm.NewTaskTitle = "Не потерять";
 
-        await vm.AddTaskCommand.ExecuteAsync();
+        await vm.AddTaskCommand.ExecuteAsync(vm.NewTaskRequest);
 
         Assert.AreEqual("Не потерять", vm.Tasks.Single().Title);
         StringAssert.Contains(vm.Message, "Не удалось");
