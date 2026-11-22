@@ -8,15 +8,25 @@ namespace ToDoList.Tests.Data;
 public sealed class SqliteSchemaTests
 {
     [TestMethod]
-    public void GenerateCreateScript_SqliteProvider_CreatesTaskTableWithParentForeignKey()
+    public void GenerateCreateScript_CreatesTaskTable()
     {
-        var options = new DbContextOptionsBuilder<TodoDbContext>()
-            .UseSqlite("Data Source=:memory:").Options;
-        using var context = new TodoDbContext(options);
+        using var context = CreateContext();
 
         var script = context.Database.GenerateCreateScript();
 
         StringAssert.Contains(script, "CREATE TABLE \"Tasks\"");
+    }
+
+    [TestMethod]
+    public void GenerateCreateScript_CreatesParentForeignKey()
+    {
+        using var context = CreateContext();
+
+        var script = context.Database.GenerateCreateScript();
+
         StringAssert.Contains(script, "FOREIGN KEY (\"ParentId\")");
     }
+
+    private static TodoDbContext CreateContext() => new(
+        new DbContextOptionsBuilder<TodoDbContext>().UseSqlite("Data Source=:memory:").Options);
 }

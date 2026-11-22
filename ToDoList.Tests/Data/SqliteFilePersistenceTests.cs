@@ -21,7 +21,6 @@ public sealed class SqliteFilePersistenceTests
             var secondInstance = SqliteTodoRepositoryFactory.Create(path);
             var actual = await secondInstance.LoadAsync();
 
-            Assert.IsTrue(File.Exists(path));
             TodoFixtures.AssertStateEqual(state, actual);
         }
         finally

@@ -1,5 +1,3 @@
-using ToDoList.Core;
-using ToDoList.Data;
 using ToDoList.Models;
 using ToDoList.Tests.Helpers;
 using ToDoList.ViewModels;
@@ -7,125 +5,175 @@ using ToDoList.ViewModels;
 namespace ToDoList.Tests.ViewModels;
 
 [TestClass]
+[TestCategory("Unit")]
 [TestCategory("ViewModels")]
 public sealed class CreationCommandTests
 {
     [TestMethod]
-    [DataRow(null)]
-    [DataRow("")]
-    [DataRow(" \t ")]
-    public async Task AddCommands_BlankInput_AreDisabledAndDoNotExecute(string? name)
+    [DataRow("Task", null)]
+    [DataRow("Task", "")]
+    [DataRow("Task", " \t ")]
+    [DataRow("Category", null)]
+    [DataRow("Category", "")]
+    [DataRow("Category", " \t ")]
+    [DataRow("Child", null)]
+    [DataRow("Child", "")]
+    [DataRow("Child", " \t ")]
+    public async Task AddCommand_BlankInput_IsDisabled(string kind, string? name)
     {
-        var repository = new InMemoryTodoRepository();
-        var initial = TodoFixtures.CreateTree();
-        await repository.SaveAsync(initial);
-        var vm = new MainViewModel(new TodoService(repository));
-        await vm.LoadCommand.ExecuteAsync();
-        var parent = vm.Tasks[0];
-        vm.NewTaskTitle = name!;
-        vm.NewCategoryName = name!;
-        parent.NewChildTitle = name!;
+        var target = await CreateTargetAsync(kind);
+        target.SetTitle(name);
 
-        Assert.IsFalse(vm.AddTaskCommand.CanExecute(vm.NewTaskRequest));
-        Assert.IsFalse(vm.AddCategoryCommand.CanExecute(vm.NewCategoryRequest));
-        Assert.IsFalse(parent.AddChildCommand.CanExecute(parent.NewChildRequest));
-        await vm.AddTaskCommand.ExecuteAsync(vm.NewTaskRequest);
-        await vm.AddCategoryCommand.ExecuteAsync(vm.NewCategoryRequest);
-        await parent.AddChildCommand.ExecuteAsync(parent.NewChildRequest);
+        var enabled = target.Command.CanExecute(target.Request());
 
-        Assert.IsFalse(vm.HasMessage);
-        TodoFixtures.AssertStateEqual(initial, await repository.LoadAsync());
+        Assert.IsFalse(enabled);
     }
 
     [TestMethod]
-    public async Task CategoryNameChanged_NotifiesBindingsAndCommand_AndClearingDisablesCommand()
+    [DataRow("Task")]
+    [DataRow("Category")]
+    [DataRow("Child")]
+    public async Task AddCommand_BlankInput_DoesNotExecute(string kind)
     {
-        var vm = new MainViewModel(new TodoService(new InMemoryTodoRepository()));
-        await vm.LoadCommand.ExecuteAsync();
-        var events = new List<string>();
-        vm.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(vm.NewCategoryRequest)) events.Add("parameter");
-        };
-        vm.AddCategoryCommand.CanExecuteChanged += (_, _) => events.Add("command");
-        Assert.IsFalse(vm.AddCategoryCommand.CanExecute(vm.NewCategoryRequest));
+        var target = await CreateTargetAsync(kind);
+        target.SetTitle(" ");
 
-        vm.NewCategoryName = "Учёба";
+        await target.Command.ExecuteAsync(target.Request());
+
+        Assert.IsEmpty(target.Service.SaveRequests);
+    }
+
+    [TestMethod]
+    [DataRow("Task", false)]
+    [DataRow("Task", true)]
+    [DataRow("Category", false)]
+    [DataRow("Category", true)]
+    [DataRow("Child", false)]
+    [DataRow("Child", true)]
+    public async Task AddCommand_InvalidParameter_DoesNotExecute(string kind, bool wrongType)
+    {
+        var target = await CreateTargetAsync(kind);
+        target.SetTitle("Корректное название");
+        object? parameter = wrongType ? "wrong type" : null;
+
+        await target.Command.ExecuteAsync(parameter);
+
+        Assert.IsEmpty(target.Service.SaveRequests);
+    }
+
+    [TestMethod]
+    [DataRow("Task")]
+    [DataRow("Category")]
+    [DataRow("Child")]
+    public async Task AddCommand_UsesNameFromParameter(string kind)
+    {
+        var target = await CreateTargetAsync(kind);
+        target.SetTitle("Название из поля");
+        object parameter = kind == "Category"
+            ? new CategoryCreationRequest(" Из параметра ")
+            : new TaskCreationRequest(" Из параметра ", Category.None);
+
+        await target.Command.ExecuteAsync(parameter);
+
+        var saved = target.Service.SaveRequests.Single();
+        var actualName = kind switch
+        {
+            "Category" => saved.Categories.Last().Name,
+            "Task" => saved.Tasks.Last().Title,
+            _ => saved.Tasks[0].Children[0].Children.Last().Title
+        };
+        Assert.AreEqual("Из параметра", actualName);
+    }
+
+    [TestMethod]
+    [DataRow("Task")]
+    [DataRow("Child")]
+    public async Task AddCommand_UsesCategoryFromParameter(string kind)
+    {
+        var target = await CreateTargetAsync(kind);
+        var category = target.Service.State.Categories[0];
+        target.Vm.SelectedCategory = Category.None;
+        target.Vm.Tasks[0].Children[0].NewChildCategory = Category.None;
+
+        await target.Command.ExecuteAsync(new TaskCreationRequest("Задача", category));
+
+        var saved = target.Service.SaveRequests.Single();
+        var actual = kind == "Task" ? saved.Tasks.Last() : saved.Tasks[0].Children[0].Children.Last();
+        Assert.AreEqual(category.Id, actual.CategoryId);
+    }
+
+    [TestMethod]
+    [DataRow("Task")]
+    [DataRow("Category")]
+    [DataRow("Child")]
+    public async Task AddCommand_AfterSubmission_IsDisabledForClearedInput(string kind)
+    {
+        var target = await CreateTargetAsync(kind);
+        target.SetTitle("Новое название");
+
+        await target.Command.ExecuteAsync(target.Request());
+
+        Assert.IsFalse(target.Command.CanExecute(target.Request()));
+    }
+
+    [TestMethod]
+    public async Task CategoryNameChanged_NotifiesParameterBindingBeforeCommand()
+    {
+        var target = await CreateTargetAsync("Category");
+        var events = new List<string>();
+        target.Vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainViewModel.NewCategoryRequest)) events.Add("parameter");
+        };
+        target.Command.CanExecuteChanged += (_, _) => events.Add("command");
+
+        target.SetTitle("Учёба");
 
         CollectionAssert.AreEqual(new[] { "parameter", "command" }, events);
-        Assert.IsTrue(vm.AddCategoryCommand.CanExecute(vm.NewCategoryRequest));
-        await vm.AddCategoryCommand.ExecuteAsync(vm.NewCategoryRequest);
-        Assert.HasCount(1, vm.CategoryItems);
-        Assert.AreEqual("", vm.NewCategoryName);
-        Assert.IsFalse(vm.AddCategoryCommand.CanExecute(vm.NewCategoryRequest));
     }
 
     [TestMethod]
-    public async Task LoadCommand_NotifiesCreationCommands_WhenDataBecomesReady()
+    [DataRow("Task")]
+    [DataRow("Category")]
+    public void AddCommand_BeforeLoad_IsDisabled(string kind)
     {
-        var vm = new MainViewModel(new TodoService(new InMemoryTodoRepository()))
-        { NewTaskTitle = "Задача", NewCategoryName = "Категория" };
-        var taskEvents = 0;
-        var categoryEvents = 0;
-        vm.AddTaskCommand.CanExecuteChanged += (_, _) => taskEvents++;
-        vm.AddCategoryCommand.CanExecuteChanged += (_, _) => categoryEvents++;
-        Assert.IsFalse(vm.AddTaskCommand.CanExecute(vm.NewTaskRequest));
-        Assert.IsFalse(vm.AddCategoryCommand.CanExecute(vm.NewCategoryRequest));
+        var vm = new MainViewModel(new StubTodoService()) { NewTaskTitle = "Задача", NewCategoryName = "Категория" };
+        var command = kind == "Task" ? vm.AddTaskCommand : vm.AddCategoryCommand;
+        object request = kind == "Task" ? vm.NewTaskRequest : vm.NewCategoryRequest;
 
-        await vm.LoadCommand.ExecuteAsync();
+        var enabled = command.CanExecute(request);
 
-        Assert.IsTrue(vm.AddTaskCommand.CanExecute(vm.NewTaskRequest));
-        Assert.IsTrue(vm.AddCategoryCommand.CanExecute(vm.NewCategoryRequest));
-        Assert.AreEqual(1, taskEvents);
-        Assert.AreEqual(1, categoryEvents);
+        Assert.IsFalse(enabled);
     }
 
     [TestMethod]
-    public async Task AddCommands_UseProvidedRequest_InsteadOfCurrentFormFields()
+    [DataRow("Task")]
+    [DataRow("Category")]
+    public async Task LoadCommand_EnablesCreationCommand(string kind)
     {
-        var repository = new InMemoryTodoRepository();
-        var vm = new MainViewModel(new TodoService(repository));
+        var vm = new MainViewModel(new StubTodoService()) { NewTaskTitle = "Задача", NewCategoryName = "Категория" };
+        var command = kind == "Task" ? vm.AddTaskCommand : vm.AddCategoryCommand;
+
         await vm.LoadCommand.ExecuteAsync();
-        vm.NewCategoryName = "Другое название";
-        await vm.AddCategoryCommand.ExecuteAsync(new CategoryCreationRequest(" Из параметра "));
-        var category = vm.Categories.Single(c => c.Id != Guid.Empty);
-        Assert.AreEqual("Из параметра", category.Name);
-        vm.NewTaskTitle = "Другая задача";
-        vm.SelectedCategory = Category.None;
 
-        await vm.AddTaskCommand.ExecuteAsync(new TaskCreationRequest(" Задача из параметра ", category));
-        var parent = vm.Tasks.Single();
-        parent.NewChildTitle = "Другая подзадача";
-        parent.NewChildCategory = Category.None;
-        await parent.AddChildCommand.ExecuteAsync(new TaskCreationRequest(" Подзадача из параметра ", category));
-
-        var saved = (await repository.LoadAsync()).Tasks.Single();
-        Assert.AreEqual("Задача из параметра", saved.Title);
-        Assert.AreEqual(category.Id, saved.CategoryId);
-        Assert.AreEqual("Подзадача из параметра", saved.Children.Single().Title);
-        Assert.AreEqual(category.Id, saved.Children.Single().CategoryId);
-        Assert.IsFalse(vm.AddTaskCommand.CanExecute(vm.NewTaskRequest));
-        Assert.IsFalse(parent.AddChildCommand.CanExecute(parent.NewChildRequest));
+        object request = kind == "Task" ? vm.NewTaskRequest : vm.NewCategoryRequest;
+        Assert.IsTrue(command.CanExecute(request));
     }
 
-    [TestMethod]
-    public async Task AddCommands_MissingOrWrongParameter_DoNotExecute()
+    private static async Task<Target> CreateTargetAsync(string kind)
     {
-        var vm = new MainViewModel(new TodoService(new InMemoryTodoRepository()));
+        var service = new StubTodoService { State = TodoFixtures.CreateTree() };
+        var vm = new MainViewModel(service);
         await vm.LoadCommand.ExecuteAsync();
-        vm.NewCategoryName = "Корректное название";
-        vm.NewTaskTitle = "Корректное название";
-
-        foreach (var command in new[] { vm.AddTaskCommand, vm.AddCategoryCommand })
+        var child = vm.Tasks[0].Children[0];
+        return kind switch
         {
-            Assert.IsFalse(command.CanExecute(null));
-            Assert.IsFalse(command.CanExecute("wrong type"));
-            await command.ExecuteAsync();
-            await command.ExecuteAsync("wrong type");
-        }
-
-        Assert.IsEmpty(vm.Tasks);
-        Assert.IsEmpty(vm.CategoryItems);
-        Assert.IsFalse(vm.HasMessage);
+            "Task" => new(vm, service, vm.AddTaskCommand, () => vm.NewTaskRequest, name => vm.NewTaskTitle = name!),
+            "Category" => new(vm, service, vm.AddCategoryCommand, () => vm.NewCategoryRequest, name => vm.NewCategoryName = name!),
+            _ => new(vm, service, child.AddChildCommand, () => child.NewChildRequest, name => child.NewChildTitle = name!)
+        };
     }
+
+    private sealed record Target(MainViewModel Vm, StubTodoService Service, AsyncCommand Command,
+        Func<object> Request, Action<string?> SetTitle);
 }

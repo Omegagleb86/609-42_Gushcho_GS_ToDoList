@@ -6,7 +6,7 @@ namespace ToDoList.ViewModels;
 
 public sealed class MainViewModel : ObservableObject
 {
-    private readonly TodoService service;
+    private readonly ITodoService service;
     public string StorageDescription { get; }
     private readonly SemaphoreSlim storageLock = new(1, 1);
     private bool loaded;
@@ -60,7 +60,7 @@ public sealed class MainViewModel : ObservableObject
     public AsyncCommand SaveCommand { get; }
     public AsyncCommand LoadCommand { get; }
 
-    public MainViewModel(TodoService service, string storageDescription = "Задачи сохраняются в памяти до закрытия приложения.")
+    public MainViewModel(ITodoService service, string storageDescription = "Задачи сохраняются в памяти до закрытия приложения.")
     {
         this.service = service;
         StorageDescription = storageDescription;

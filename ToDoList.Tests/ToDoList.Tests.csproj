@@ -9,8 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="MSTest" Version="4.0.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
-    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.14" />
+    <ProjectReference Include="../ToDoList.Data/ToDoList.Data.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,7 +23,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ToDoList.Core\ToDoList.Core.csproj" />
-    <ProjectReference Include="..\ToDoList.Data\ToDoList.Data.csproj" />
     <ProjectReference Include="..\ToDoList.Models\ToDoList.Models.csproj" />
   </ItemGroup>
 

@@ -25,9 +25,9 @@ public static class MauiProgram
         // Store the database in the platform's writable application data directory.
         builder.Services.AddSingleton<ITodoRepository>(_ =>
             SqliteTodoRepositoryFactory.Create(Path.Combine(FileSystem.AppDataDirectory, "todolist.db3")));
-        builder.Services.AddSingleton<TodoService>();
+        builder.Services.AddSingleton<ITodoService, TodoService>();
         builder.Services.AddSingleton(provider => new MainViewModel(
-            provider.GetRequiredService<TodoService>(), "Задачи сохраняются на этом устройстве в SQLite."));
+            provider.GetRequiredService<ITodoService>(), "Задачи сохраняются на этом устройстве в SQLite."));
         builder.Services.AddTransient<MainPage>();
         builder.Services.AddSingleton<AppShell>();
 

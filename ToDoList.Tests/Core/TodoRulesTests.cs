@@ -4,6 +4,7 @@ using ToDoList.Models;
 namespace ToDoList.Tests.Core;
 
 [TestClass]
+[TestCategory("Unit")]
 [TestCategory("Core")]
 public sealed class TodoRulesTests
 {

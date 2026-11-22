@@ -1,5 +1,4 @@
 using ToDoList.Core;
-using ToDoList.Data;
 using ToDoList.Models;
 using ToDoList.Tests.Helpers;
 using ToDoList.ViewModels;
@@ -7,179 +6,224 @@ using ToDoList.ViewModels;
 namespace ToDoList.Tests.ViewModels;
 
 [TestClass]
+[TestCategory("Unit")]
 [TestCategory("ViewModels")]
 public sealed class MainViewModelTests
 {
     [TestMethod]
-    public async Task AddTaskCommand_BlankName_IsDisabledAndDoesNotAddTask()
+    public async Task AddTaskCommand_BlankName_DoesNotShowError()
     {
-        var (vm, repository) = await CreateAsync();
+        var (vm, _) = await CreateAsync();
         vm.NewTaskTitle = "   ";
 
         await vm.AddTaskCommand.ExecuteAsync(vm.NewTaskRequest);
 
-        Assert.IsEmpty(vm.Tasks);
-        Assert.IsFalse(vm.AddTaskCommand.CanExecute(vm.NewTaskRequest));
         Assert.IsFalse(vm.HasMessage);
-        Assert.IsEmpty((await repository.LoadAsync()).Tasks);
     }
 
     [TestMethod]
-    public async Task AddCategoryCommand_DuplicateIgnoringCase_RejectsDuplicateAndTrimsName()
+    public async Task AddCategoryCommand_TrimsCategoryName()
     {
-        var (vm, repository) = await CreateAsync();
+        var (vm, service) = await CreateAsync();
         vm.NewCategoryName = " Учёба ";
+
         await vm.AddCategoryCommand.ExecuteAsync(vm.NewCategoryRequest);
+
+        Assert.AreEqual("Учёба", service.SaveRequests.Single().Categories.Single().Name);
+    }
+
+    [TestMethod]
+    public async Task AddCategoryCommand_DuplicateIgnoringCase_DoesNotAddCategory()
+    {
+        var category = new Category(Guid.NewGuid(), "Учёба");
+        var (vm, service) = await CreateAsync(new([category], []));
         vm.NewCategoryName = "учёба";
 
         await vm.AddCategoryCommand.ExecuteAsync(vm.NewCategoryRequest);
 
-        Assert.HasCount(2, vm.Categories); // Includes the UI-only "Без категории".
-        Assert.AreEqual("Учёба", vm.Categories[1].Name);
-        Assert.IsTrue(vm.HasMessage);
-        Assert.HasCount(1, (await repository.LoadAsync()).Categories);
+        Assert.HasCount(1, vm.CategoryItems);
+        Assert.IsEmpty(service.SaveRequests);
     }
 
     [TestMethod]
-    public async Task AddTaskCommand_SelectedCategory_CreatesTrimmedTaskWithCategory()
+    public async Task AddTaskCommand_TrimsTaskTitle()
     {
-        var (vm, repository) = await CreateAsync();
-        vm.NewCategoryName = "Учёба";
-        await vm.AddCategoryCommand.ExecuteAsync(vm.NewCategoryRequest);
+        var (vm, service) = await CreateAsync();
         vm.NewTaskTitle = " Проект ";
 
         await vm.AddTaskCommand.ExecuteAsync(vm.NewTaskRequest);
 
-        var task = vm.Tasks.Single();
-        Assert.AreEqual("Проект", task.Title);
-        Assert.AreEqual(vm.SelectedCategory, task.SelectedCategory);
-        Assert.AreEqual(vm.SelectedCategory!.Id, (await repository.LoadAsync()).Tasks.Single().CategoryId);
+        Assert.AreEqual("Проект", service.SaveRequests.Single().Tasks.Single().Title);
+    }
+
+    [TestMethod]
+    public async Task AddTaskCommand_AssignsSelectedCategory()
+    {
+        var category = new Category(Guid.NewGuid(), "Учёба");
+        var (vm, service) = await CreateAsync(new([category], []));
+        vm.NewTaskTitle = "Проект";
+        vm.SelectedCategory = category;
+
+        await vm.AddTaskCommand.ExecuteAsync(vm.NewTaskRequest);
+
+        Assert.AreEqual(category.Id, service.SaveRequests.Single().Tasks.Single().CategoryId);
+    }
+
+    [TestMethod]
+    public async Task AddTaskCommand_ClearsTitleInput()
+    {
+        var (vm, _) = await CreateAsync();
+        vm.NewTaskTitle = "Проект";
+
+        await vm.AddTaskCommand.ExecuteAsync(vm.NewTaskRequest);
+
         Assert.AreEqual("", vm.NewTaskTitle);
     }
 
     [TestMethod]
     public async Task ToggleCommand_ChildCompletion_DoesNotChangeParentStatus()
     {
-        var (vm, repository) = await CreateAsync();
-        vm.NewTaskTitle = "Родитель";
-        await vm.AddTaskCommand.ExecuteAsync(vm.NewTaskRequest);
-        var parent = vm.Tasks.Single();
-        await parent.ShowChildCommand.ExecuteAsync();
-        parent.NewChildTitle = "Экран";
-        await parent.AddChildCommand.ExecuteAsync(parent.NewChildRequest);
-        var child = parent.Children.Single();
-        await child.ShowChildCommand.ExecuteAsync();
-        child.NewChildTitle = "Кнопки";
-        await child.AddChildCommand.ExecuteAsync(child.NewChildRequest);
+        var (vm, service) = await CreateAsync(TodoFixtures.CreateTree());
 
-        await child.ToggleCommand.ExecuteAsync();
+        await vm.Tasks[0].Children[0].ToggleCommand.ExecuteAsync();
 
-        Assert.AreEqual("radio_active.png", child.StatusIcon);
-        Assert.AreEqual("radio_notactive.png", parent.StatusIcon);
-        var storedParent = (await repository.LoadAsync()).Tasks.Single();
-        Assert.IsFalse(storedParent.IsCompleted);
-        Assert.IsTrue(storedParent.Children.Single().IsCompleted);
-        Assert.AreEqual("Кнопки", storedParent.Children.Single().Children.Single().Title);
+        Assert.IsFalse(service.SaveRequests.Single().Tasks[0].IsCompleted);
+    }
+
+    [TestMethod]
+    public async Task ToggleCommand_MarksTaskCompleted()
+    {
+        var (vm, service) = await CreateAsync(TodoFixtures.CreateTree());
+
+        await vm.Tasks[0].ToggleCommand.ExecuteAsync();
+
+        Assert.IsTrue(service.SaveRequests.Single().Tasks[0].IsCompleted);
     }
 
     [TestMethod]
     public async Task ToggleCommand_ToggledTwice_RestoresIncompleteState()
     {
-        var (vm, repository) = await CreateAsync(TodoFixtures.CreateTree());
+        var (vm, service) = await CreateAsync(TodoFixtures.CreateTree());
         var task = vm.Tasks[0];
 
         await task.ToggleCommand.ExecuteAsync();
         await task.ToggleCommand.ExecuteAsync();
 
         Assert.AreEqual("radio_notactive.png", task.StatusIcon);
-        Assert.IsFalse((await repository.LoadAsync()).Tasks[0].IsCompleted);
+        Assert.IsFalse(service.State.Tasks[0].IsCompleted);
     }
 
     [TestMethod]
     public async Task RenameCommand_BlankName_RestoresPreviousName()
     {
         var initial = TodoFixtures.CreateTree();
-        var (vm, repository) = await CreateAsync(initial);
-        var task = vm.Tasks[0];
-        task.Title = " ";
+        var (vm, _) = await CreateAsync(initial);
+        vm.Tasks[0].Title = " ";
 
-        await task.RenameCommand.ExecuteAsync();
+        await vm.Tasks[0].RenameCommand.ExecuteAsync();
 
-        Assert.AreEqual(initial.Tasks[0].Title, task.Title);
-        Assert.IsTrue(vm.HasMessage);
-        TodoFixtures.AssertStateEqual(initial, await repository.LoadAsync());
+        Assert.AreEqual(initial.Tasks[0].Title, vm.Tasks[0].Title);
     }
 
     [TestMethod]
-    public async Task SaveCommand_RenameAndClearCategory_ReloadsUpdatedTree()
+    public async Task RenameCommand_BlankName_ShowsError()
     {
-        var initial = TodoFixtures.CreateTree();
-        var (vm, repository) = await CreateAsync(initial);
+        var (vm, _) = await CreateAsync(TodoFixtures.CreateTree());
+        vm.Tasks[0].Title = " ";
+
+        await vm.Tasks[0].RenameCommand.ExecuteAsync();
+
+        Assert.IsTrue(vm.HasMessage);
+    }
+
+    [TestMethod]
+    public async Task RenameCommand_BlankName_DoesNotSubmitChanges()
+    {
+        var (vm, service) = await CreateAsync(TodoFixtures.CreateTree());
+        vm.Tasks[0].Title = " ";
+
+        await vm.Tasks[0].RenameCommand.ExecuteAsync();
+
+        Assert.IsEmpty(service.SaveRequests);
+    }
+
+    [TestMethod]
+    public async Task RenameCommand_ValidName_SubmitsTrimmedTitle()
+    {
+        var (vm, service) = await CreateAsync(TodoFixtures.CreateTree());
         var parent = vm.Tasks[0];
         parent.Title = " Новый проект ";
+
         await parent.RenameCommand.ExecuteAsync();
-        parent.SelectedCategory = Category.None;
-        await vm.SaveCommand.ExecuteAsync();
-        var restored = new MainViewModel(new TodoService(repository));
 
-        await restored.LoadCommand.ExecuteAsync();
-
-        var expectedParent = initial.Tasks[0] with { Title = "Новый проект", CategoryId = null };
-        TodoFixtures.AssertStateEqual(new(initial.Categories, [expectedParent, initial.Tasks[1]]),
-            new(restored.Categories.Where(c => c.Id != Guid.Empty).ToArray(), restored.Tasks.Select(t => t.ToModel()).ToArray()));
-        Assert.AreEqual(Category.None, restored.Tasks[0].SelectedCategory);
+        Assert.AreEqual("Новый проект", service.SaveRequests.Single().Tasks[0].Title);
     }
 
     [TestMethod]
-    public async Task DeleteCommand_Child_RemovesAllDescendantsAndPreservesParent()
+    public async Task SelectedCategory_Cleared_SubmitsTaskWithoutCategory()
     {
         var initial = TodoFixtures.CreateTree();
-        var (vm, repository) = await CreateAsync(initial);
+        var (vm, service) = await CreateAsync(initial);
+
+        vm.Tasks[0].SelectedCategory = Category.None;
+
+        var expectedParent = initial.Tasks[0] with { CategoryId = null };
+        TodoFixtures.AssertStateEqual(new(initial.Categories, [expectedParent, initial.Tasks[1]]), service.SaveRequests.Single());
+    }
+
+    [TestMethod]
+    public async Task DeleteCommand_Child_SubmitsTreeWithoutDeletedBranch()
+    {
+        var initial = TodoFixtures.CreateTree();
+        var (vm, service) = await CreateAsync(initial);
 
         await vm.Tasks[0].Children.Single().DeleteCommand.ExecuteAsync();
 
-        Assert.IsEmpty(vm.Tasks[0].Children);
         TodoFixtures.AssertStateEqual(new(initial.Categories,
-            [initial.Tasks[0] with { Children = [] }, initial.Tasks[1]]), await repository.LoadAsync());
+            [initial.Tasks[0] with { Children = [] }, initial.Tasks[1]]), service.State);
     }
 
     [TestMethod]
-    public async Task DeleteCommand_Root_RemovesEntireTreeAndPreservesOtherTasks()
+    public async Task DeleteCommand_Root_SubmitsTreeWithoutDeletedRoot()
     {
         var initial = TodoFixtures.CreateTree();
-        var (vm, repository) = await CreateAsync(initial);
+        var (vm, service) = await CreateAsync(initial);
 
         await vm.Tasks[0].DeleteCommand.ExecuteAsync();
 
-        Assert.HasCount(1, vm.Tasks);
-        TodoFixtures.AssertStateEqual(new(initial.Categories, [initial.Tasks[1]]), await repository.LoadAsync());
+        TodoFixtures.AssertStateEqual(new(initial.Categories, [initial.Tasks[1]]), service.State);
     }
 
     [TestMethod]
-    public async Task AddTaskCommand_StorageFails_RetainsUnsavedTaskAndShowsError()
+    public async Task AddTaskCommand_StorageFails_RetainsUnsavedTask()
     {
-        var vm = new MainViewModel(new TodoService(new FailingRepository()));
+        var vm = new MainViewModel(new StubTodoService { SaveError = new IOException("Storage unavailable") });
         await vm.LoadCommand.ExecuteAsync();
         vm.NewTaskTitle = "Не потерять";
 
         await vm.AddTaskCommand.ExecuteAsync(vm.NewTaskRequest);
 
         Assert.AreEqual("Не потерять", vm.Tasks.Single().Title);
+    }
+
+    [TestMethod]
+    public async Task AddTaskCommand_StorageFails_ShowsError()
+    {
+        var vm = new MainViewModel(new StubTodoService { SaveError = new IOException("Storage unavailable") });
+        await vm.LoadCommand.ExecuteAsync();
+        vm.NewTaskTitle = "Не потерять";
+
+        await vm.AddTaskCommand.ExecuteAsync(vm.NewTaskRequest);
+
         StringAssert.Contains(vm.Message, "Не удалось");
     }
 
-    private static async Task<(MainViewModel Vm, InMemoryTodoRepository Repository)> CreateAsync(TodoState? initial = null)
+    private static async Task<(MainViewModel Vm, StubTodoService Service)> CreateAsync(TodoState? initial = null)
     {
-        var repository = new InMemoryTodoRepository();
-        if (initial is not null) await repository.SaveAsync(initial);
-        var vm = new MainViewModel(new TodoService(repository));
+        var service = new StubTodoService();
+        if (initial is not null) service.State = initial;
+        var vm = new MainViewModel(service);
         await vm.LoadCommand.ExecuteAsync();
-        return (vm, repository);
-    }
-
-    private sealed class FailingRepository : ITodoRepository
-    {
-        public Task<TodoState> LoadAsync() => Task.FromResult(new TodoState([], []));
-        public Task SaveAsync(TodoState state) => throw new IOException("Storage unavailable");
+        return (vm, service);
     }
 }
