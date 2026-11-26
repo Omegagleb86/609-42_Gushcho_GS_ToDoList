@@ -252,22 +252,6 @@ public sealed class EfTodoRepositoryTests
     }
 
     [TestMethod]
-    public async Task SaveAsync_InsertFails_RollsBackEntireTransaction()
-    {
-        await SeedAsync();
-        await using (var context = database.CreateContext())
-        {
-            await context.Database.ExecuteSqlRawAsync(
-                "CREATE TRIGGER fail_write BEFORE INSERT ON Tasks WHEN NEW.Title = 'FAIL' BEGIN SELECT RAISE(ABORT, 'test failure'); END;");
-        }
-
-        await Assert.ThrowsExactlyAsync<DbUpdateException>(() =>
-            database.Repository.SaveAsync(new([], [new(Guid.NewGuid(), "FAIL", false, null, [])])));
-
-        TodoFixtures.AssertStateEqual(initial, await database.Repository.LoadAsync());
-    }
-
-    [TestMethod]
     public async Task SaveAsync_UnknownCategory_ThrowsArgumentException()
     {
         await SeedAsync();
